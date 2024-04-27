@@ -9,7 +9,7 @@ bubba[3] #[1] 7
 bubba[4] #[1] 9
 bubba[5] #[1] NA
 
-heisenberg <- read.csv(file="src/simple.csv",head=TRUE,sep=",")
+heisenberg <- read.csv(file="../src/simple.csv",head=TRUE,sep=",")
 heisenberg
 summary(heisenberg)
 
@@ -24,7 +24,7 @@ heisenberg$velocity #[1] 12 14  8 10 13 11
 
 names(heisenberg) #[1] "trial" "mass" "velocity"
 
-tree <- read.csv(file="src/trees91.csv",header=TRUE,sep=",");
+tree <- read.csv(file="../src/trees91.csv",header=TRUE,sep=",");
 attributes(tree)
 names(tree)
 
@@ -33,5 +33,5 @@ tree$C
 
 help(read.fwf)
 
-a = read.fwf('src/fixedWidth.dat',widths=c(-17,15,7),col.names=c('temp','offices'))
+a = read.fwf('../src/fixedWidth.dat',widths=c(-17,15,7),col.names=c('temp','offices'))
 a

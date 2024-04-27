@@ -1,8 +1,8 @@
 setwd("I:/mestrado/statistic-data-analysis")
 #5. Basic Plots
-w1 <- read.csv(file="src/w1.dat",sep=",",head=TRUE)
+w1 <- read.csv(file="../src/w1.dat",sep=",",head=TRUE)
 names(w1) #[1] "vals"
-tree <- read.csv(file="src/trees91.csv",sep=",",head=TRUE)
+tree <- read.csv(file="../src/trees91.csv",sep=",",head=TRUE)
 names(tree)
 #[1] "C"      "N"      "CHBR"   "REP"    "LFBM"   "STBM"   "RTBM"   "LFNCC"
 #[9] "STNCC"  "RTNCC"  "LFBCC"  "STBCC"  "RTBCC"  "LFCACC" "STCACC" "RTCACC"
@@ -71,7 +71,7 @@ hist(w1$vals,main='Leaf BioMass in High CO2 Environment',xlab='BioMass of Leaves
 boxplot(w1$vals,horizontal=TRUE,at=16,add=TRUE,axes=FALSE)
 stripchart(w1$vals,add=TRUE,at=15)
 
-tree <- read.csv(file="src/trees91.csv",sep=",",head=TRUE)
+tree <- read.csv(file="../src/trees91.csv",sep=",",head=TRUE)
 tree$C <- factor(tree$C)
 tree$N <- factor(tree$N)
 

@@ -41,7 +41,7 @@ pmin(a,b) #[1] -1 -2 -3 -4
 
 
 #3.2. Basic Numerical Descriptions
-tree <- read.csv(file="src/trees91.csv",header=TRUE,sep=",");
+tree <- read.csv(file="../src/trees91.csv",header=TRUE,sep=",");
 names(tree)
 tree$LFBM
 
