@@ -6,6 +6,18 @@ advertising <- read.csv(file="src/advertising.csv",head=TRUE,sep=",")
 # Resumo das medidas descritivas para a variável 'Sales'
 summary(advertising$Sales)
 
+# Definir uma função para realizar o teste de Shapiro-Wilk e interpretar os resultados
+testar_normalidade <- function(data, variable_name) {
+  test_result <- shapiro.test(data)
+  cat("\nTeste de Shapiro-Wilk para", variable_name, ":\n")
+  print(test_result)
+  if (test_result$p.value < 0.05) {
+    cat("Resultado:", variable_name, "não segue uma distribuição normal (p < 0.05)\n")
+  } else {
+    cat("Resultado:", variable_name, "pode seguir uma distribuição normal (p >= 0.05)\n")
+  }
+}
+
 # Plotando histograma de 'Sales'
 hist(
     advertising$Sales, 
@@ -39,7 +51,7 @@ plot(
 )
 
 # Teste de Shapiro-Wilk para normalidade
-shapiro.test(advertising$Sales)
+testar_normalidade(advertising$Sales, "Sales")
 
 # Intervalo de confiança para a média de 'Sales'
 mean_sales <- mean(advertising$Sales)

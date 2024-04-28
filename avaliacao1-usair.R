@@ -6,6 +6,18 @@ usair <- read.csv(file="src/usair.csv",head=TRUE,sep=",")
 # Resumo das medidas descritivas para as variáveis selecionadas
 summary(usair[c("SO2", "temp", "popn")])
 
+# Definir uma função para realizar o teste de Shapiro-Wilk e interpretar os resultados
+testar_normalidade <- function(data, variable_name) {
+  test_result <- shapiro.test(data)
+  cat("\nTeste de Shapiro-Wilk para", variable_name, ":\n")
+  print(test_result)
+  if (test_result$p.value < 0.05) {
+    cat("Resultado:", variable_name, "não segue uma distribuição normal (p < 0.05)\n")
+  } else {
+    cat("Resultado:", variable_name, "pode seguir uma distribuição normal (p >= 0.05)\n")
+  }
+}
+
 boxplot(
     usair$SO2, 
     main="Boxplot de SO2", 
@@ -30,8 +42,15 @@ hist(
     xlab = "População"
 )
 
-# Teste de Shapiro-Wilk para normalidade
-shapiro.test(usair$SO2)
+# Teste de Shapiro-Wilk para SO2
+# Aplicar a função para cada variável
+testar_normalidade(usair$SO2, "SO2")
+testar_normalidade(usair$temp, "Temperatura")
+testar_normalidade(usair$popn, "População")
+
+# Q-Q plot para SO2
+qqnorm(usair$SO2)
+qqline(usair$SO2, col = "red")
 
 # Plotando gráfico de dispersão
 par(mfrow = c(1, 1))
