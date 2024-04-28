@@ -42,13 +42,13 @@ plot(
 shapiro.test(advertising$Sales)
 
 # Intervalo de confiança para a média de 'Sales'
-media_sales <- mean(advertising$Sales)
+mean_sales <- mean(advertising$Sales)
 sd_sales <- sd(advertising$Sales)
 n <- length(advertising$Sales)
 error_margin <- qt(0.975, df = n-1) * (sd_sales / sqrt(n))
 
-ci_lower <- media_sales - error_margin
-ci_upper <- media_sales + error_margin
+ci_lower <- mean_sales - error_margin
+ci_upper <- mean_sales + error_margin
 
-c("Média Vendas:",mean_sales, "Margem de Erro:", error_margin)
-c(ci_lower, ci_upper)
+c("Média Vendas:", mean_sales, "Margem de Erro:", error_margin)
+cat("Intervalo de Confiança para a média de Sales:", ci_lower, ci_upper)
