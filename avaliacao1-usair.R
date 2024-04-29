@@ -50,8 +50,16 @@ testar_normalidade(usair$popn, "População")
 
 # Q-Q plot para SO2
 par(mfrow = c(1, 1))
-qqnorm(usair$SO2)
-qqline(usair$SO2, col = "red")
+qqnorm(usair$SO2, main="Q-Q Plot para SO2", ylab="Quantis de SO2", xlab="Quantis Normais")
+qqline(usair$SO2, col="red", lwd=2)
+
+quantis <- qqnorm(usair$SO2, plot.it = FALSE)
+distancias <- abs(quantis$x - quantis$y)
+limiar <- quantile(distancias, 0.95)  # Definindo um limiar para destacar os 5% mais distantes
+
+points(quantis$x[distancias > limiar], quantis$y[distancias > limiar], col="blue", pch=19)
+
+text(min(quantis$x), max(quantis$y), labels="Áreas de maior discrepância", pos=4, col="blue")
 
 # Plotando gráfico de dispersão
 plot(
