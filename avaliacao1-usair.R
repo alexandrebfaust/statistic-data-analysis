@@ -49,11 +49,11 @@ testar_normalidade(usair$temp, "Temperatura")
 testar_normalidade(usair$popn, "População")
 
 # Q-Q plot para SO2
+par(mfrow = c(1, 1))
 qqnorm(usair$SO2)
 qqline(usair$SO2, col = "red")
 
 # Plotando gráfico de dispersão
-par(mfrow = c(1, 1))
 plot(
     usair$temp, 
     usair$SO2, 
@@ -70,5 +70,7 @@ error_margin <- qt(0.975, df=n-1) * sd_so2 / sqrt(n)
 ci_lower <- mean_so2 - error_margin
 ci_upper <- mean_so2 + error_margin
 
-c("Média Vendas:", mean_so2, "Margem de Erro:", error_margin)
+summary(usair[c("SO2", "temp", "popn")])
+
+c("Média SO2:", mean_so2, "Margem de Erro:", error_margin)
 cat("Intervalo de Confiança para a média de SO2:", ci_lower, ci_upper)

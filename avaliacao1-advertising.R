@@ -53,6 +53,11 @@ plot(
 # Teste de Shapiro-Wilk para normalidade
 testar_normalidade(advertising$Sales, "Sales")
 
+# Q-Q plot para Sales
+par(mfrow = c(1, 1))
+qqnorm(advertising$Sales)
+qqline(advertising$Sales, col = "red")
+
 # Intervalo de confiança para a média de 'Sales'
 mean_sales <- mean(advertising$Sales)
 sd_sales <- sd(advertising$Sales)
