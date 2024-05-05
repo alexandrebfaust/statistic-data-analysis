@@ -1,7 +1,6 @@
 setwd("I:/mestrado/statistic-data-analysis")
 library(ggplot2)
 library(dplyr)
-library(gridExtra)
 
 # Carregar a base de dados - Fonte: https://archive.ics.uci.edu/ml/machine-learning-databases/housing/housing.data
 data <- read.csv("src/housing.data", header = FALSE, sep = "")
@@ -17,7 +16,8 @@ names(correlation_df) <- c("Var1", "Var2", "Correlation")
 # Plotar a matriz de correlação
 ggplot(data = correlation_df, aes(x = Var1, y = Var2, fill = Correlation)) +
   geom_tile(color = "black") +
-  scale_fill_gradient(low = "blue", mid = "white", high = "red") +
+  geom_text(aes(label = round(Correlation, 2)), color = "black") + # Adicionar os valores de correlação
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
   labs(x = "", y = "", title = "Matriz de Correlação - Boston Housing") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
@@ -75,6 +75,7 @@ cdf_plot
 ppf_plot
 
 # Plotar os gráficos em uma grade 2x2
+library(gridExtra)
 grid.arrange(hist_plot, pdf_plot, cdf_plot, ppf_plot, ncol = 2)
 
 
