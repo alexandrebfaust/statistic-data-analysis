@@ -1,15 +1,40 @@
+setwd("I:/mestrado/statistic-data-analysis")
 library(ggplot2)
 library(dplyr)
+library(gridExtra)
 
 # Carregar a base de dados - Fonte: https://archive.ics.uci.edu/ml/machine-learning-databases/housing/housing.data
 data <- read.csv("src/housing.data", header = FALSE, sep = "")
 colnames(data) <- c("CRIM", "ZN", "INDUS", "CHAS", "NOX", "RM", "AGE", "DIS", "RAD", "TAX", "PTRATIO", "B", "LSTAT", "MEDV")
 
+# Calcular a matriz de correlação
+correlation_matrix <- cor(data)
+
+# Transformar a matriz de correlação em um dataframe
+correlation_df <- as.data.frame(as.table(correlation_matrix))
+names(correlation_df) <- c("Var1", "Var2", "Correlation")
+
+# Plotar a matriz de correlação
+ggplot(data = correlation_df, aes(x = Var1, y = Var2, fill = Correlation)) +
+  geom_tile(color = "black") +
+  scale_fill_gradient(low = "blue", mid = "white", high = "red") +
+  labs(x = "", y = "", title = "Matriz de Correlação - Boston Housing") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+###################
+
+
 # Definir a variável alvo
 target_variable <- "MEDV"
 
+
+###################
+
+
 # Histograma
-hist_plot <- ggplot(data, aes(x = !!sym(target_variable))) +
+hist_plot <- ggplot(data, aes_string(x = target_variable)) +
   geom_histogram(binwidth = 5, fill = "lightblue", color = "black") +
   labs(x = "Preço Mediano das Casas",
        y = "Frequência",
@@ -17,7 +42,7 @@ hist_plot <- ggplot(data, aes(x = !!sym(target_variable))) +
   theme_minimal()
 
 # Função de densidade de probabilidade (PDF)
-pdf_plot <- ggplot(data, aes(x = !!sym(target_variable))) +
+pdf_plot <- ggplot(data, aes_string(x = target_variable)) +
   geom_density(fill = "lightblue", color = "black") +
   labs(x = "Preço Mediano das Casas",
        y = "Densidade",
@@ -25,7 +50,7 @@ pdf_plot <- ggplot(data, aes(x = !!sym(target_variable))) +
   theme_minimal()
 
 # Função de distribuição acumulada (CDF)
-cdf_plot <- ggplot(data, aes(x = !!sym(target_variable))) +
+cdf_plot <- ggplot(data, aes_string(x = target_variable)) +
   stat_ecdf(geom = "step", color = "blue") +
   labs(x = "Preço Mediano das Casas",
        y = "Probabilidade",
@@ -34,7 +59,7 @@ cdf_plot <- ggplot(data, aes(x = !!sym(target_variable))) +
 
 # Função inversa da distribuição acumulada (PPF)
 ppf_data <- data %>%
-  mutate(ppf = qnorm(rank(MEDV)/length(MEDV), mean = mean(MEDV, na.rm = TRUE), sd = sd(MEDV, na.rm = TRUE)))
+  mutate(ppf = qnorm(rank(!!sym(target_variable))/n(), mean = mean(!!sym(target_variable), na.rm = TRUE), sd = sd(!!sym(target_variable), na.rm = TRUE)))
 
 ppf_plot <- ggplot(ppf_data, aes(x = ppf)) +
   geom_line(stat = "ecdf", color = "red") +
@@ -43,14 +68,18 @@ ppf_plot <- ggplot(ppf_data, aes(x = ppf)) +
        title = "PPF - Boston Housing") +
   theme_minimal()
 
-# Plotar os gráficos
-par(mfrow = c(2, 2))
+# Plotar os gráficos individualmente
 hist_plot
 pdf_plot
 cdf_plot
 ppf_plot
 
+# Plotar os gráficos em uma grade 2x2
+grid.arrange(hist_plot, pdf_plot, cdf_plot, ppf_plot, ncol = 2)
+
+
 ###################
+
 
 # Gráfico de dispersão dos dados
 ggplot(data, aes(x = RM, y = MEDV)) +
@@ -82,7 +111,9 @@ ggplot(data, aes(x = RM, y = MEDV)) +
        title = "Regressão Linear - Boston Housing") +
   theme_minimal()
 
+
 ###################
+
 
 # Implementação da regressão linear de uma variável
 simple_linear_regression <- function(x, y) {
@@ -107,7 +138,9 @@ cat("Slope:", beta[2], "\n")
 cat("\nCoeficientes obtidos pela função lm():\n")
 summary(lm(MEDV ~ RM, data = data))
 
+
 ###################
+
 
 # Criar os dados para plotagem da regressão linear implementada
 regression_data_custom <- data.frame(RM = x, MEDV = y, Predicted_MEDV = beta[1] + beta[2] * x)
