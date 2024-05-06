@@ -7,6 +7,9 @@ library(gridExtra)
 data <- read.csv("src/housing.data", header = FALSE, sep = "")
 colnames(data) <- c("CRIM", "ZN", "INDUS", "CHAS", "NOX", "RM", "AGE", "DIS", "RAD", "TAX", "PTRATIO", "B", "LSTAT", "MEDV")
 
+# Definir uma semente aleatória para reproduzibilidade
+set.seed(123)
+
 # Calcular a matriz de correlação
 correlation_matrix <- cor(data)
 
@@ -82,6 +85,36 @@ grid.arrange(hist_plot, pdf_plot, cdf_plot, ppf_plot, ncol = 2)
 ###################
 
 
+# Implementação da regressão linear de uma variável
+simple_linear_regression <- function(x, y) {
+  # Adicionar uma coluna de uns para o termo constante
+  X <- cbind(1, x)
+  # Calcular o estimador dos coeficientes beta
+  beta <- solve(t(X) %*% X) %*% t(X) %*% y
+  return(beta)
+}
+
+# Separar os dados em variáveis independentes (x) e variável dependente (y)
+x <- data$RM  # Número médio de quartos por habitação
+y <- data$MEDV  # Preço mediano das casas
+
+# Aplicar a função de regressão linear implementada
+model <- simple_linear_regression(x, y)
+cat("Coeficientes obtidos pela implementação:\n")
+cat("Intercepto:", model[1], "\n")
+cat("Inclinação:", model[2], "\n")
+
+# Comparar com a função nativa de regressão linear do R
+lm_model <- lm(MEDV ~ RM, data = data)
+cat("\nCoeficientes obtidos pela função lm():\n")
+summary_lm <- summary(lm_model)
+cat("Intercepto:", summary_lm$coefficients[1, 1], "\n")  # Intercept
+cat("Inclinação:", summary_lm$coefficients[2, 1], "\n")  # Slope
+
+
+###################
+
+
 # Gráfico de dispersão dos dados
 ggplot(data, aes(x = RM, y = MEDV)) +
   geom_point() +
@@ -99,8 +132,9 @@ plot_regression_line <- function(x, y, intercept, slope) {
 }
 
 # Obter os coeficientes da regressão
-intercept <- model$intercept
-slope <- model$slope
+model <- simple_linear_regression(x, y)
+intercept <- model[1]
+slope <- model[2]
 
 # Plotar a linha de regressão
 regression_data <- plot_regression_line(x, y, intercept, slope)
@@ -116,35 +150,8 @@ ggplot(data, aes(x = RM, y = MEDV)) +
 ###################
 
 
-# Implementação da regressão linear de uma variável
-simple_linear_regression <- function(x, y) {
-  # Adicionar uma coluna de uns para o termo constante
-  X <- cbind(1, x)
-  # Calcular o estimador dos coeficientes beta
-  beta <- solve(t(X) %*% X) %*% t(X) %*% y
-  return(beta)
-}
-
-# Separar os dados em variáveis independentes (x) e variável dependente (y)
-x <- data$RM  # Número médio de quartos por habitação
-y <- data$MEDV  # Preço mediano das casas
-
-# Aplicar a função de regressão linear implementada
-beta <- simple_linear_regression(x, y)
-cat("Coeficientes obtidos pela minha implementação:\n")
-cat("Intercept:", beta[1], "\n")
-cat("Slope:", beta[2], "\n")
-
-# Comparar com a função nativa de regressão linear do R
-cat("\nCoeficientes obtidos pela função lm():\n")
-summary(lm(MEDV ~ RM, data = data))
-
-
-###################
-
-
 # Criar os dados para plotagem da regressão linear implementada
-regression_data_custom <- data.frame(RM = x, MEDV = y, Predicted_MEDV = beta[1] + beta[2] * x)
+regression_data_custom <- data.frame(RM = x, MEDV = y, Predicted_MEDV = model[1] + model[2] * x)
 
 # Plotar a regressão linear implementada
 ggplot(data, aes(x = RM, y = MEDV)) +
@@ -168,8 +175,85 @@ ggplot(data, aes(x = RM, y = MEDV)) +
 ggplot(data, aes(x = RM, y = MEDV)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE, color = "red") +  # Função nativa de regressão linear
-  geom_abline(intercept = beta[1], slope = beta[2], color = "blue") +  # Nossa implementação de regressão linear
+  geom_abline(intercept = model[1], slope = model[2], color = "blue") +  # Nossa implementação de regressão linear
   labs(x = "Número Médio de Quartos por Habitação",
        y = "Preço Mediano das Casas",
        title = "Comparação de Regressões Lineares") +
   theme_minimal()
+
+
+###################
+
+
+# Definir o número de amostras para o método de Monte Carlo
+n_samples <- 1000
+
+# Lista para armazenar os coeficientes de regressão de cada amostra
+beta_samples <- vector("list", n_samples)
+
+# Realizar o método de Monte Carlo
+for (i in 1:n_samples) {
+  # Amostrar os dados com substituição
+  sampled_data <- data[sample(nrow(data), replace = TRUE), ]
+  
+  # Ajustar um modelo de regressão linear para a amostra
+  model <- lm(MEDV ~ RM, data = sampled_data)
+  
+  # Armazenar os coeficientes de regressão
+  beta_samples[[i]] <- coef(model)
+}
+
+# Converter os coeficientes de regressão em um dataframe
+beta_df <- do.call(rbind, beta_samples)
+
+# Calcular estatísticas dos coeficientes de regressão
+summary_statistics <- apply(beta_df, 2, function(x) c(mean(x), median(x), quantile(x, c(0.025, 0.975))))
+
+# Visualizar as estatísticas
+print(summary_statistics)
+
+# Converter os coeficientes de regressão em um dataframe
+beta_df <- as.data.frame(beta_df)
+
+# Renomear as colunas
+names(beta_df) <- c("Intercept", "Slope")
+
+# Plotar as densidades dos coeficientes de regressão
+plot_intercept <- ggplot(beta_df, aes(x = Intercept)) +
+  geom_density(fill = "lightblue", color = "black") +
+  labs(x = "Coeficiente de Interceptação",
+       y = "Densidade",
+       title = "Densidade do Coeficiente de Interceptação") +
+  theme_minimal()
+
+plot_slope <- ggplot(beta_df, aes(x = Slope)) +
+  geom_density(fill = "lightgreen", color = "black") +
+  labs(x = "Coeficiente de Inclinação",
+       y = "Densidade",
+       title = "Densidade do Coeficiente de Inclinação") +
+  theme_minimal()
+
+# Exibir os gráficos
+grid.arrange(plot_intercept, plot_slope, ncol = 2)
+
+
+###################
+
+
+# Criar dataframe com valores preditos pelas duas funções
+predicted_values <- data.frame(
+  RM = data$RM,
+  MEDV_nativa = predict(lm(MEDV ~ RM, data = data)),
+  MEDV_implementada = beta[1] + beta[2] * data$RM
+)
+
+# Plotar o gráfico de dispersão
+ggplot(data, aes(x = RM, y = MEDV)) +
+  geom_point() +
+  geom_line(data = predicted_values, aes(y = MEDV_nativa), color = "red") +
+  geom_line(data = predicted_values, aes(y = MEDV_implementada), color = "blue") +
+  labs(x = "Número Médio de Quartos por Habitação",
+       y = "Preço Mediano das Casas",
+       title = "Gráfico de Dispersão da Função Nativa e Implementada") +
+  theme_minimal() +
+  scale_color_manual(values = c("red", "blue"), labels = c("Função Nativa", "Função Implementada"))
