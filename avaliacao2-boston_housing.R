@@ -244,7 +244,7 @@ grid.arrange(plot_intercept, plot_slope, ncol = 2)
 predicted_values <- data.frame(
   RM = data$RM,
   MEDV_nativa = predict(lm(MEDV ~ RM, data = data)),
-  MEDV_implementada = beta[1] + beta[2] * data$RM
+  MEDV_implementada = model[1] + model[2] * data$RM
 )
 
 # Plotar o gráfico de dispersão
