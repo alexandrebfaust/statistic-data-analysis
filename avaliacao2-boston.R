@@ -27,7 +27,7 @@ hist(Boston$MEDV,
      breaks = 30,  # Aumentar o número de barras
      main = "Histograma do Valor Médio das Casas (MEDV)",
      xlab = "Valor Médio das Casas (em $1000)",
-     ylab = "Densidade",
+     ylab = "Frequência",
      col = "skyblue",
      border = "black")
 
