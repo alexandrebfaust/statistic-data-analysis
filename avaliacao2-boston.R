@@ -1,8 +1,9 @@
-#1. Carregando a base de dados Boston Housing
-# Instale o pacote MASS, caso ainda não tenha instalado
-install.packages("MASS")
+setwd("I:/mestrado/statistic-data-analysis")
 
-setwd("C:/mestrado/statistic-data-analysis")
+#1. Carregando a base de dados Boston Housing
+library(ggplot2)
+library(dplyr)
+library(gridExtra)
 
 Boston <- read.csv("src/housing.data", header = FALSE, sep = "")
 colnames(Boston) <- c("CRIM", "ZN", "INDUS", "CHAS", "NOX", "RM", "AGE", "DIS", "RAD", "TAX", "PTRATIO", "B", "LSTAT", "MEDV")
@@ -26,10 +27,9 @@ hist(Boston$MEDV,
      breaks = 30,  # Aumentar o número de barras
      main = "Histograma do Valor Médio das Casas (MEDV)",
      xlab = "Valor Médio das Casas (em $1000)",
-     ylab = "Densidade",
+     ylab = "Frequência",
      col = "skyblue",
-     border = "black",
-     prob = TRUE)  # Mostrar a densidade ao invés da frequência
+     border = "black")
 
 # Calcular e adicionar a linha de densidade
 dens <- density(Boston$MEDV)
@@ -42,6 +42,24 @@ abline(v = media_medv, col = "red", lwd = 2, lty = 2)
 text(media_medv, max(dens$y), 
      labels = paste("Média =", round(media_medv, 2)), pos = 4, col = "red")
 
+
+################################
+
+# Calcular a matriz de correlação
+correlation_matrix <- cor(Boston)
+
+# Transformar a matriz de correlação em um dataframe
+correlation_df <- as.data.frame(as.table(correlation_matrix))
+names(correlation_df) <- c("Var1", "Var2", "Correlation")
+
+# Plotar a matriz de correlação
+ggplot(data = correlation_df, aes(x = Var1, y = Var2, fill = Correlation)) +
+  geom_tile(color = "black") +
+  geom_text(aes(label = round(Correlation, 2)), color = "black") + # Adicionar os valores de correlação
+  scale_fill_gradient2(low = "blue", mid = "white", high = "red", midpoint = 0) +
+  labs(x = "", y = "", title = "Matriz de Correlação - Boston Housing") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ################################
 
