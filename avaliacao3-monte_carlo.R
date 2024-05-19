@@ -1,109 +1,179 @@
-# Função para implementar o LCG
-lcg <- function(m, a, c, X0, N) {
-  X <- numeric(N)
-  X[1] <- X0
+# 1. Implementar o LCG
+# Função LCG
+set.seed(123)
+lcg <- function(m = 2^31 - 1, a = 1664525, c = 1013904223, X0 = 1, N) {
+  x <- numeric(N)
+  x[1] <- X0
   for (i in 2:N) {
-    X[i] <- (a * X[i - 1] + c) %% m
+    x[i] <- (a * x[i-1] + c) %% m
   }
-  u <- X / m
+  # Normalizar para o intervalo [0, 1]
+  u <- x / m
   return(u)
 }
 
-# Função para a Inverse Transform Sampling
-inverse_transform_sampling <- function(u, dist = "uniform", params = list(min = 0, max = 1)) {
+# Teste da função LCG
+N <- 1000
+lcg_vals <- lcg(N = N)
+head(lcg_vals)
+
+
+
+# 2. Implementar a Inverse Transform Sampling
+inverse_transform_sampling <- function(U, dist = "uniform", params = list()) {
   if (dist == "uniform") {
-    return (params$min + (params$max - params$min) * u)
+    a <- ifelse(is.null(params$a), 0, params$a)
+    b <- ifelse(is.null(params$b), 1, params$b)
+    return(a + (b - a) * U)
   } else if (dist == "normal") {
-    return (qnorm(u, mean = params$mean, sd = params$sd))
-  } else {
-    stop("Distribuição não suportada")
+    mu <- ifelse(is.null(params$mu), 0, params$mu)
+    sigma <- ifelse(is.null(params$sigma), 1, params$sigma)
+    return(qnorm(U, mean = mu, sd = sigma))
   }
+  stop("Distribuição não suportada")
 }
 
-# Função para o Método de Monte Carlo com Critério de Parada por Convergência
-monte_carlo <- function(N, f, tol = 1e-6, max_iter = 10000) {
-  estimates <- numeric(max_iter)
-  for (i in 1:max_iter) {
-    x <- runif(N)
-    estimates[i] <- mean(f(x))
-    if (i > 1 && abs(estimates[i] - estimates[i-1]) < tol) {
-      break
+# Teste da função Inverse Transform Sampling
+uniform_samples <- inverse_transform_sampling(lcg_vals, dist = "uniform", params = list(a = 0, b = 1))
+normal_samples <- inverse_transform_sampling(lcg_vals, dist = "normal", params = list(mu = 0, sigma = 1))
+head(uniform_samples)
+head(normal_samples)
+
+
+
+# 3. Implementar o Método de Monte Carlo com critério de parada por convergência
+monte_carlo <- function(func, n_max = 10000, tol = 1e-6) {
+  estimates <- numeric(n_max)
+  for (n in 1:n_max) {
+    estimates[n] <- func()
+    if (n > 1) {
+      if (abs(estimates[n] - estimates[n-1]) < tol) {
+        return(list(estimate = mean(estimates[1:n]), sd = sd(estimates[1:n]), n = n))
+      }
     }
   }
-  return (estimates[1:i])
+  return(list(estimate = mean(estimates), sd = sd(estimates), n = n_max))
 }
 
-# Parâmetros padrão do LCG
-default_m <- 2^31 - 1
-default_a <- 1103515245
-default_c <- 12345
-default_X0 <- 1
+# Funções de teste
+func_uniform <- function() { sum(runif(100, 0, 1)^2) }
+func_normal <- function() { rnorm(1, mean = 0, sd = 1) }
 
-# Número de amostras
-N <- 10000
+# Teste da função Monte Carlo
+result_uniform <- monte_carlo(func_uniform)
+result_normal <- monte_carlo(func_normal)
 
-# Cenário 1: Y = X1 + X2, X1: uniforme (0, 1), X2: normal (0, 1)
-set.seed(123)
-f1 <- function(x) {
-  u1 <- inverse_transform_sampling(x, "uniform", list(min = 0, max = 1))
-  u2 <- inverse_transform_sampling(x, "normal", list(mean = 0, sd = 1))
-  return (u1 + u2)
+print(result_uniform)
+print(result_normal)
+
+
+
+# 4. Testar a rotina implementada no método de Monte Carlo nos cenários fornecidos
+# Cenário 1: Y=X1+X2, X1: uniforme, (0, 1) e X2: normal, (0,1)
+monte_carlo_Y1 <- function() {
+  X1 <- runif(1, 0, 1)
+  X2 <- rnorm(1, 0, 1)
+  return(X1 + X2)
 }
-estimates1 <- monte_carlo(N, f1)
-mean_est1 <- mean(estimates1)
-sd_est1 <- sd(estimates1)
+result_Y1 <- monte_carlo(monte_carlo_Y1)
 
-native_samples1 <- runif(N) + rnorm(N, mean = 0, sd = 1)
-native_mean1 <- mean(native_samples1)
-native_sd1 <- sd(native_samples1)
 
-# Cenário 2: Y = X, X: uniforme (0, 1)
-f2 <- function(x) {
-  u <- inverse_transform_sampling(x, "uniform", list(min = 0, max = 1))
-  return (u)
+# Cenário 2: Y=X2, X: uniforme (0,1) ou normal (0, 1)
+monte_carlo_Y2_uniform <- function() { return(runif(1, 0, 1)) }
+monte_carlo_Y2_normal <- function() { return(rnorm(1, 0, 1)) }
+
+result_Y2_uniform <- monte_carlo(monte_carlo_Y2_uniform)
+result_Y2_normal <- monte_carlo(monte_carlo_Y2_normal)
+
+
+# Cenário 3: Y=Sum(Xi2), i=1,...,100; Xi: uniforme, (0,1);
+monte_carlo_Y3 <- function() {
+  X <- runif(100, 0, 1)
+  return(sum(X^2))
 }
-estimates2 <- monte_carlo(N, f2)
-mean_est2 <- mean(estimates2)
-sd_est2 <- sd(estimates2)
+result_Y3 <- monte_carlo(monte_carlo_Y3)
 
-native_samples2 <- runif(N)
-native_mean2 <- mean(native_samples2)
-native_sd2 <- sd(native_samples2)
 
-# Cenário 3: Y = sum(Xi^2), i = 1,...,100; Xi: uniforme (0, 1)
-f3 <- function(x) {
-  u <- inverse_transform_sampling(x, "uniform", list(min = 0, max = 1))
-  return (sum(u^2))
+# 5. Obter a média, desvio padrão, histograma e/ou PDF de Y
+# Função para obter estatísticas
+obter_estatisticas <- function(amostras) {
+  media <- mean(amostras)
+  desvio_padrao <- sd(amostras)
+  hist(amostras, probability = TRUE, main = "Histograma")
+  lines(density(amostras), col = "blue")
+  return(list(media = media, desvio_padrao = desvio_padrao))
 }
-estimates3 <- monte_carlo(N, f3)
-mean_est3 <- mean(estimates3)
-sd_est3 <- sd(estimates3)
 
-native_samples3 <- rowSums(matrix(runif(N * 100), ncol = 100)^2)
-native_mean3 <- mean(native_samples3)
-native_sd3 <- sd(native_samples3)
+# Obter amostras
+amostras_Y1 <- replicate(10000, monte_carlo_Y1())
+amostras_Y2_uniform <- replicate(10000, monte_carlo_Y2_uniform())
+amostras_Y2_normal <- replicate(10000, monte_carlo_Y2_normal())
+amostras_Y3 <- replicate(10000, monte_carlo_Y3())
+
+# Estatísticas
+estatisticas_Y1 <- obter_estatisticas(amostras_Y1)
+estatisticas_Y2_uniform <- obter_estatisticas(amostras_Y2_uniform)
+estatisticas_Y2_normal <- obter_estatisticas(amostras_Y2_normal)
+estatisticas_Y3 <- obter_estatisticas(amostras_Y3)
+
+print(estatisticas_Y1)
+print(estatisticas_Y2_uniform)
+print(estatisticas_Y2_normal)
+print(estatisticas_Y3)
+
+
+
+# 6. Comparar o resultado e a taxa de convergência com a função de geração de números aleatórios nativa em R
+# Função Monte Carlo com amostras nativas de R
+monte_carlo_native <- function(func, n_max = 10000, tol = 1e-6) {
+  estimates <- numeric(n_max)
+  for (n in 1:n_max) {
+    estimates[n] <- func()
+    if (n > 1) {
+      if (abs(estimates[n] - estimates[n-1]) < tol) {
+        return(list(estimate = mean(estimates[1:n]), sd = sd(estimates[1:n]), n = n))
+      }
+    }
+  }
+  return(list(estimate = mean(estimates), sd = sd(estimates), n = n_max))
+}
+
+# Teste com funções nativas
+result_native_Y1 <- monte_carlo_native(monte_carlo_Y1)
+result_native_Y2_uniform <- monte_carlo_native(monte_carlo_Y2_uniform)
+result_native_Y2_normal <- monte_carlo_native(monte_carlo_Y2_normal)
+result_native_Y3 <- monte_carlo_native(monte_carlo_Y3)
+
 
 # Comparando os resultados
 cat("Comparação - Cenário 1:\n")
-cat("Monte Carlo - Média:", mean_est1, "Desvio Padrão:", sd_est1, "\n")
-cat("Nativo - Média:", native_mean1, "Desvio Padrão:", native_sd1, "\n\n")
+cat("Monte Carlo - Média:", result_Y1$estimate, "Desvio Padrão:", result_Y1$sd, "\n")
+cat("Nativo - Média:", result_native_Y1$estimate, "Desvio Padrão:", result_native_Y1$sd, "\n\n")
 
-cat("Comparação - Cenário 2:\n")
-cat("Monte Carlo - Média:", mean_est2, "Desvio Padrão:", sd_est2, "\n")
-cat("Nativo - Média:", native_mean2, "Desvio Padrão:", native_sd2, "\n\n")
+cat("Comparação - Cenário 2 - Uniforme:\n")
+cat("Monte Carlo - Média:", result_Y2_uniform$estimate, "Desvio Padrão:", result_Y2_uniform$sd, "\n")
+cat("Nativo - Média:", result_native_Y2_uniform$estimate, "Desvio Padrão:", result_native_Y2_uniform$sd, "\n\n")
+cat("Comparação - Cenário 2 - Normal:\n")
+cat("Monte Carlo - Média:", result_Y2_normal$estimate, "Desvio Padrão:", result_Y2_normal$sd, "\n")
+cat("Nativo - Média:", result_native_Y2_normal$estimate, "Desvio Padrão:", result_native_Y2_normal$sd, "\n\n")
+
 
 cat("Comparação - Cenário 3:\n")
-cat("Monte Carlo - Média:", mean_est3, "Desvio Padrão:", sd_est3, "\n")
-cat("Nativo - Média:", native_mean3, "Desvio Padrão:", native_sd3, "\n\n")
+cat("Monte Carlo - Média:", result_Y3$estimate, "Desvio Padrão:", result_Y3$sd, "\n")
+cat("Nativo - Média:", result_native_Y3$estimate, "Desvio Padrão:", result_native_Y3$sd, "\n\n")
+
 
 # Plotando histogramas
-par(mfrow = c(3, 2))
+par(mfrow = c(2, 1))
 
-hist(estimates1, main = "Monte Carlo: Y = X1 + X2", xlab = "Y", col = "blue")
-hist(native_samples1, main = "Nativo: Y = X1 + X2", xlab = "Y", col = "red")
+hist(amostras_Y1, main = "Monte Carlo: Y = X1 + X2", xlab = "Y", col = "blue")
+hist(replicate(10000, monte_carlo_Y1()), main = "Nativo: Y = X1 + X2", xlab = "Y", col = "red")
 
-hist(estimates2, main = "Monte Carlo: Y = X", xlab = "Y", col = "blue")
-hist(native_samples2, main = "Nativo: Y = X", xlab = "Y", col = "red")
+hist(amostras_Y2_uniform, main = "Monte Carlo: Y = X Uniforme", xlab = "Y", col = "blue")
+hist(replicate(10000, monte_carlo_Y2_uniform()), main = "Nativo: Y = X Uniforme", xlab = "Y", col = "red")
 
-hist(estimates3, main = "Monte Carlo: Y = Sum(Xi^2)", xlab = "Y", col = "blue")
-hist(native_samples3, main = "Nativo: Y = Sum(Xi^2)", xlab = "Y", col = "red")
+hist(amostras_Y2_normal, main = "Monte Carlo: Y = X Normal", xlab = "Y", col = "blue")
+hist(replicate(10000, monte_carlo_Y2_normal()), main = "Nativo: Y = X Normal", xlab = "Y", col = "red")
+
+hist(amostras_Y3, main = "Monte Carlo: Y = Sum(Xi^2)", xlab = "Y", col = "blue")
+hist(replicate(10000, monte_carlo_Y3()), main = "Nativo: Y = Sum(Xi^2)", xlab = "Y", col = "red")
