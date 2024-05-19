@@ -94,13 +94,14 @@ monte_carlo_Y3 <- function() {
 result_Y3 <- monte_carlo(monte_carlo_Y3)
 
 
+
 # 5. Obter a média, desvio padrão, histograma e/ou PDF de Y
 # Função para obter estatísticas
-obter_estatisticas <- function(amostras) {
+obter_estatisticas <- function(amostras, title) {
   media <- mean(amostras)
   desvio_padrao <- sd(amostras)
-  hist(amostras, probability = TRUE, main = "Histograma")
-  lines(density(amostras), col = "blue")
+  hist(amostras, probability = TRUE, main = "Histograma", col = "gray")
+  lines(density(amostras), col = "blue", lwd = 2)
   return(list(media = media, desvio_padrao = desvio_padrao))
 }
 
@@ -109,17 +110,6 @@ amostras_Y1 <- replicate(10000, monte_carlo_Y1())
 amostras_Y2_uniform <- replicate(10000, monte_carlo_Y2_uniform())
 amostras_Y2_normal <- replicate(10000, monte_carlo_Y2_normal())
 amostras_Y3 <- replicate(10000, monte_carlo_Y3())
-
-# Estatísticas
-estatisticas_Y1 <- obter_estatisticas(amostras_Y1)
-estatisticas_Y2_uniform <- obter_estatisticas(amostras_Y2_uniform)
-estatisticas_Y2_normal <- obter_estatisticas(amostras_Y2_normal)
-estatisticas_Y3 <- obter_estatisticas(amostras_Y3)
-
-print(estatisticas_Y1)
-print(estatisticas_Y2_uniform)
-print(estatisticas_Y2_normal)
-print(estatisticas_Y3)
 
 
 
@@ -164,7 +154,7 @@ cat("Nativo - Média:", result_native_Y3$estimate, "Desvio Padrão:", result_nat
 
 
 # Plotando histogramas
-par(mfrow = c(2, 1))
+par(mfrow = c(4, 2))
 
 hist(amostras_Y1, main = "Monte Carlo: Y = X1 + X2", xlab = "Y", col = "blue")
 hist(replicate(10000, monte_carlo_Y1()), main = "Nativo: Y = X1 + X2", xlab = "Y", col = "red")
@@ -177,3 +167,26 @@ hist(replicate(10000, monte_carlo_Y2_normal()), main = "Nativo: Y = X Normal", x
 
 hist(amostras_Y3, main = "Monte Carlo: Y = Sum(Xi^2)", xlab = "Y", col = "blue")
 hist(replicate(10000, monte_carlo_Y3()), main = "Nativo: Y = Sum(Xi^2)", xlab = "Y", col = "red")
+
+
+# Plotando histogramas com PDFs
+par(mfrow = c(2, 2))
+
+hist(amostras_Y1, probability = TRUE, main = "Monte Carlo: Y = X1 + X2", xlab = "Y", col = "gray")
+lines(density(amostras_Y1), col = "blue", lwd = 2)
+
+hist(amostras_Y2_uniform, probability = TRUE, main = "Monte Carlo: Y = X Uniforme", xlab = "Y", col = "gray")
+lines(density(amostras_Y2_uniform), col = "blue", lwd = 2)
+
+hist(amostras_Y2_normal, probability = TRUE, main = "Monte Carlo: Y = X Normal", xlab = "Y", col = "gray")
+lines(density(amostras_Y2_normal), col = "blue", lwd = 2)
+
+hist(amostras_Y3, probability = TRUE, main = "Monte Carlo: Y = Sum(Xi^2)", xlab = "Y", col = "gray")
+lines(density(amostras_Y3), col = "blue", lwd = 2)
+
+
+# Estatísticas
+print(estatisticas_Y1)
+print(estatisticas_Y2_uniform)
+print(estatisticas_Y2_normal)
+print(estatisticas_Y3)
